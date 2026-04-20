@@ -3,106 +3,278 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comprehensive Nutritional Requirements Calculator</title>
+    <title>NutriCalc: Science & Optimization</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #F9F7F1; color: #3F3A36; }
-        .card { background-color: #FFFFFF; border: 1px solid #E5E0D8; border-radius: 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
-        .input-field { width: 100%; padding: 0.75rem; border: 1px solid #D1CFC9; border-radius: 0.5rem; background-color: #FAFAFA; transition: border-color 0.2s; }
-        .input-field:focus { outline: none; border-color: #5D7052; ring: 2px solid #5D7052; }
-        .btn-primary { background-color: #5D7052; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; transition: background-color 0.2s; }
-        .btn-primary:hover { background-color: #4A5A41; }
-        .toggle-btn { padding: 0.5rem 1rem; border: 1px solid #D1CFC9; background-color: #FAFAFA; color: #7A7369; cursor: pointer; transition: all 0.2s; }
-        .toggle-btn.active { background-color: #5D7052; color: white; border-color: #5D7052; }
-        .toggle-btn:first-child { border-top-left-radius: 0.5rem; border-bottom-left-radius: 0.5rem; }
-        .toggle-btn:last-child { border-top-right-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
         
+        /* Modern v0 Base */
+        :root {
+            --rose-500: #f43f5e;
+            --rose-600: #e11d48;
+            --rose-900: #881337;
+            --bg-base: #000000;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-base); 
+            color: #e4e4e7; 
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* Glassmorphism Cards */
+        .glass-card { 
+            background-color: rgba(24, 24, 27, 0.6); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            border-radius: 1rem; 
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Sleek Inputs */
+        .input-field { 
+            width: 100%; 
+            padding: 0.75rem 1rem; 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 0.75rem; 
+            background-color: rgba(9, 9, 11, 0.5); 
+            color: #f4f4f5;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        
+        .input-field:focus { 
+            outline: none; 
+            border-color: var(--rose-500); 
+            background-color: rgba(24, 24, 27, 0.8);
+            box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.1); 
+        }
+        
+        /* Modern Buttons */
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--rose-500) 0%, var(--rose-600) 100%);
+            color: white; 
+            padding: 0.875rem 1.5rem; 
+            border-radius: 0.75rem; 
+            font-weight: 600; 
+            letter-spacing: 0.025em;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: all 0.6s ease;
+        }
+
+        .btn-primary:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -6px rgba(225, 29, 72, 0.5);
+        }
+
+        .btn-primary:hover::after {
+            left: 100%;
+        }
+        
+        /* Toggle Buttons */
+        .toggle-btn { 
+            padding: 0.5rem 1rem; 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            background-color: rgba(9, 9, 11, 0.4); 
+            color: #a1a1aa; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            font-size: 0.875rem;
+        }
+        
+        .toggle-btn.active { 
+            background-color: rgba(24, 24, 27, 0.9); 
+            color: white; 
+            border-color: rgba(255, 255, 255, 0.2); 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .toggle-btn:first-child { border-top-left-radius: 0.75rem; border-bottom-left-radius: 0.75rem; }
+        .toggle-btn:last-child { border-top-right-radius: 0.75rem; border-bottom-right-radius: 0.75rem; }
+        
+        /* Chart Container */
         .chart-container {
             position: relative;
             width: 100%;
-            max-width: 350px;
+            max-width: 300px;
             margin-left: auto;
             margin-right: auto;
-            height: 300px;
+            height: 280px;
         }
-        
-        @media (min-width: 768px) {
-            .chart-container { height: 350px; }
-        }
+        @media (min-width: 768px) { .chart-container { height: 320px; } }
         
         input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
         
-        #aiOutput h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1rem; color: #5D7052; border-bottom: 1px solid #E5E0D8; padding-bottom: 0.25rem;}
-        #aiOutput ul { list-style-type: disc; padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
-        #aiOutput p { margin-top: 0.5rem; margin-bottom: 0.5rem; }
+        /* AI Output Formatting */
+        #aiOutput h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1.25rem; color: var(--rose-500); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;}
+        #aiOutput ul { list-style-type: disc; padding-left: 1.5rem; margin-top: 0.75rem; margin-bottom: 0.75rem; color: #d4d4d8; }
+        #aiOutput p { margin-top: 0.75rem; margin-bottom: 0.75rem; color: #d4d4d8; line-height: 1.6; }
+        #aiOutput strong { color: #f4f4f5; font-weight: 600; }
+        
+        /* Ambient Aurora Background Animation */
+        .ambient-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.4;
+            animation: drift linear infinite alternate;
+        }
+
+        .orb-1 {
+            width: 60vw; height: 60vw;
+            background: rgba(225, 29, 72, 0.25);
+            top: -20%; left: -10%;
+            animation-duration: 25s;
+        }
+
+        .orb-2 {
+            width: 50vw; height: 50vw;
+            background: rgba(136, 19, 55, 0.3);
+            bottom: -10%; right: -20%;
+            animation-duration: 30s;
+            animation-direction: alternate-reverse;
+        }
+
+        .orb-3 {
+            width: 40vw; height: 40vw;
+            background: rgba(76, 29, 149, 0.15);
+            top: 40%; left: 50%;
+            animation-duration: 35s;
+        }
+
+        @keyframes drift {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(10%, 5%) scale(1.1) rotate(180deg); }
+            100% { transform: translate(-5%, 15%) scale(0.95) rotate(360deg); }
+        }
+
+        /* Modern Chat Widget */
+        .chat-transition {
+            transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .chat-hidden { opacity: 0; transform: translateY(30px) scale(0.95); pointer-events: none; }
+        .chat-visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        
+        #chatMessages::-webkit-scrollbar { width: 4px; }
+        #chatMessages::-webkit-scrollbar-track { background: transparent; }
+        #chatMessages::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.1); border-radius: 10px; }
+        #chatMessages::-webkit-scrollbar-thumb:hover { background-color: rgba(255,255,255,0.2); }
+        
+        .user-msg { background: linear-gradient(135deg, var(--rose-500) 0%, var(--rose-600) 100%); color: white; border-radius: 1.25rem 1.25rem 0 1.25rem; align-self: flex-end; }
+        .bot-msg { background-color: rgba(39, 39, 42, 0.6); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.05); color: #e4e4e7; border-radius: 1.25rem 1.25rem 1.25rem 0; align-self: flex-start; }
+        .bot-msg p { margin-bottom: 0.5rem; }
+        .bot-msg strong { color: #fecdd3; font-weight: 500; }
+
+        /* Pure CSS Loading Spinner */
+        .loader {
+            border: 2px solid rgba(255,255,255,0.1);
+            border-left-color: var(--rose-500);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .metric-card-hover { transition: all 0.3s ease; }
+        .metric-card-hover:hover { transform: translateY(-3px); border-color: rgba(244, 63, 94, 0.4); background-color: rgba(24, 24, 27, 0.8); }
+
+        .supp-card { transition: all 0.3s ease; }
+        .supp-card:hover { border-color: rgba(255,255,255,0.2); background-color: rgba(39,39,42,0.4); }
     </style>
 </head>
-<body class="antialiased p-4 md:p-8 min-h-screen flex flex-col">
+<body class="p-4 md:p-8 min-h-screen flex flex-col relative selection:bg-rose-500/30 selection:text-rose-100">
 
-    <!-- Chosen Palette: Warm Neutrals (Stone/Off-white) with Muted Sage Green (#5D7052), Rust (#D97757), and Ochre (#E5B15D) accents. -->
-    <!-- Application Structure Plan: A two-part dashboard. Section 1 is an input form collecting physiological data and goals. Section 2 (initially hidden) is the results dashboard. It uses a top-down information hierarchy: high-level energy needs (Calories), mid-level energy composition (Macros visually represented by a Donut chart), and granular biological requirements (Micros in a structured grid). This isolates inputs from outputs for clarity and prevents visual overload before data is processed. -->
-    <!-- Visualization & Content Choices: 1. Total Calories -> Metric Cards -> Provides immediate, clear answers for Maintenance and Goal calories. 2. Macronutrients -> Donut Chart (Chart.js) & Data List -> Shows the proportional breakdown of calories visually while providing exact gram amounts needed for meal planning. 3. Micronutrients -> Grid Layout -> Organizes RDAs clearly based on the user's demographic input without overwhelming them with charts. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- Ambient Animated Background -->
+    <div class="ambient-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
 
-    <div class="max-w-5xl mx-auto w-full">
+    <div class="max-w-5xl mx-auto w-full z-10">
         
-        <header class="mb-8 text-center md:text-left">
-            <h1 class="text-3xl md:text-4xl font-bold mb-2">NutriCalc: Philippine Edition</h1>
-            <p class="text-[#7A7369] max-w-2xl text-sm md:text-base">Calculate your foundational energy requirements (TDEE), optimal macronutrient splits, and essential micronutrients tailored for the hot and humid Philippine climate.</p>
+        <header class="mb-10 text-center md:text-left mt-4 md:mt-8">
+            <h1 class="text-4xl md:text-5xl font-bold mb-3 text-white tracking-tight">Nutri<span class="text-rose-500">Calc</span></h1>
+            <p class="text-zinc-400 max-w-2xl text-sm md:text-base leading-relaxed">An evidence-based architecture for muscle hypertrophy, fat loss, and optimal biological function, elegantly engineered for the Philippine climate.</p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            <section class="lg:col-span-4 card p-6 h-fit">
+            <!-- Left Form Section -->
+            <section class="lg:col-span-4 glass-card p-6 md:p-8 h-fit transition-all duration-500">
                 <div class="mb-6">
-                    <h2 class="text-xl font-semibold border-b border-[#E5E0D8] pb-2 mb-2">Physiological Profile</h2>
-                    <p class="text-xs text-[#7A7369]">Input your metrics to generate a personalized nutritional baseline using the Mifflin-St Jeor equation.</p>
+                    <h2 class="text-lg font-semibold text-white mb-1 tracking-wide">Physiological Profile</h2>
+                    <p class="text-xs text-zinc-500">Configure your baseline metrics.</p>
                 </div>
 
                 <form id="calcForm" class="space-y-5">
                     
                     <div>
-                        <label class="block text-sm font-medium mb-1">Unit System</label>
-                        <div class="flex">
-                            <button type="button" class="toggle-btn active flex-1" data-unit="metric">Metric (kg/cm)</button>
-                            <button type="button" class="toggle-btn flex-1" data-unit="imperial">Imperial (lbs/in)</button>
+                        <div class="flex p-1 bg-black/40 rounded-xl border border-white/5">
+                            <button type="button" class="toggle-btn active flex-1 rounded-lg border-transparent" data-unit="metric">Metric</button>
+                            <button type="button" class="toggle-btn flex-1 rounded-lg border-transparent" data-unit="imperial">Imperial</button>
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Biological Sex</label>
-                        <div class="flex gap-4">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="gender" value="male" checked class="accent-[#5D7052]">
-                                <span>Male</span>
+                    <div class="pt-2">
+                        <label class="block text-xs font-medium mb-3 text-zinc-400 uppercase tracking-wider">Biological Sex</label>
+                        <div class="flex gap-6">
+                            <label class="flex items-center gap-2 cursor-pointer text-zinc-300 hover:text-white transition-colors group">
+                                <div class="relative flex items-center justify-center w-5 h-5">
+                                    <input type="radio" name="gender" value="male" checked class="peer sr-only">
+                                    <div class="w-4 h-4 rounded-full border border-zinc-500 peer-checked:border-rose-500 transition-all"></div>
+                                    <div class="w-2 h-2 rounded-full bg-rose-500 absolute scale-0 peer-checked:scale-100 transition-transform"></div>
+                                </div>
+                                <span class="text-sm font-medium">Male</span>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="gender" value="female" class="accent-[#5D7052]">
-                                <span>Female</span>
+                            <label class="flex items-center gap-2 cursor-pointer text-zinc-300 hover:text-white transition-colors group">
+                                <div class="relative flex items-center justify-center w-5 h-5">
+                                    <input type="radio" name="gender" value="female" class="peer sr-only">
+                                    <div class="w-4 h-4 rounded-full border border-zinc-500 peer-checked:border-rose-500 transition-all"></div>
+                                    <div class="w-2 h-2 rounded-full bg-rose-500 absolute scale-0 peer-checked:scale-100 transition-transform"></div>
+                                </div>
+                                <span class="text-sm font-medium">Female</span>
                             </label>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-4 pt-2">
                         <div>
-                            <label for="age" class="block text-sm font-medium mb-1">Age</label>
+                            <label for="age" class="block text-xs font-medium mb-1.5 text-zinc-400">Age</label>
                             <input type="number" id="age" required min="15" max="100" class="input-field" placeholder="Years">
                         </div>
                         <div>
-                            <label for="weight" class="block text-sm font-medium mb-1">Weight <span id="weightLabel">(kg)</span></label>
+                            <label for="weight" class="block text-xs font-medium mb-1.5 text-zinc-400">Weight <span id="weightLabel" class="text-zinc-600">(kg)</span></label>
                             <input type="number" id="weight" required min="30" max="300" step="0.1" class="input-field" placeholder="0.0">
                         </div>
                     </div>
 
                     <div>
-                        <label for="height" class="block text-sm font-medium mb-1">Height <span id="heightLabel">(cm)</span></label>
+                        <label for="height" class="block text-xs font-medium mb-1.5 text-zinc-400">Height <span id="heightLabel" class="text-zinc-600">(cm)</span></label>
                         <input type="number" id="height" required min="100" max="250" class="input-field" placeholder="0">
                         <div id="imperialHeightInputs" class="hidden grid grid-cols-2 gap-4 mt-1">
                             <input type="number" id="heightFt" placeholder="Feet" class="input-field" min="3" max="8">
@@ -110,135 +282,312 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label for="activity" class="block text-sm font-medium mb-1">Activity Level</label>
-                        <select id="activity" class="input-field appearance-none">
-                            <option value="1.2">Sedentary (Office job, little exercise)</option>
-                            <option value="1.375">Lightly Active (Exercise 1-3 days/wk)</option>
-                            <option value="1.55" selected>Moderately Active (Exercise 3-5 days/wk)</option>
-                            <option value="1.725">Very Active (Heavy exercise 6-7 days/wk)</option>
-                            <option value="1.9">Extra Active (Physical job + intense exercise)</option>
-                        </select>
+                    <div class="pt-2">
+                        <label for="activity" class="block text-xs font-medium mb-1.5 text-zinc-400">Activity Level</label>
+                        <div class="relative">
+                            <select id="activity" class="input-field appearance-none cursor-pointer">
+                                <option value="1.2">Sedentary (Office job)</option>
+                                <option value="1.375">Lightly Active (1-3 days/wk)</option>
+                                <option value="1.55" selected>Moderately Active (3-5 days/wk)</option>
+                                <option value="1.725">Very Active (6-7 days/wk)</option>
+                                <option value="1.9">Extra Active (Intense physical job)</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                ▼
+                            </div>
+                        </div>
                     </div>
 
                     <div>
-                        <label for="goal" class="block text-sm font-medium mb-1">Primary Goal</label>
-                        <select id="goal" class="input-field appearance-none">
-                            <option value="maintain">Maintain Current Weight</option>
-                            <option value="cut_mild">Mild Deficit (Lose ~0.25kg / 0.5lb per week)</option>
-                            <option value="cut">Moderate Deficit (Lose ~0.5kg / 1lb per week)</option>
-                            <option value="bulk_mild">Mild Surplus (Gain ~0.25kg / 0.5lb per week)</option>
-                            <option value="bulk">Moderate Surplus (Gain ~0.5kg / 1lb per week)</option>
-                        </select>
+                        <label for="goal" class="block text-xs font-medium mb-1.5 text-zinc-400">Primary Objective</label>
+                        <div class="relative">
+                            <select id="goal" class="input-field appearance-none cursor-pointer">
+                                <option value="maintain">Maintain Architecture</option>
+                                <option value="cut_mild">Mild Deficit (Recomp)</option>
+                                <option value="cut">Moderate Deficit (Cut)</option>
+                                <option value="bulk_mild">Mild Surplus (Lean Bulk)</option>
+                                <option value="bulk">Moderate Surplus (Mass)</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                ▼
+                            </div>
+                        </div>
                     </div>
 
-                    <button type="submit" class="btn-primary w-full mt-4 text-lg">Generate Profile</button>
-                    <div id="errorMsg" class="text-red-500 text-sm hidden text-center mt-2">Please fill all fields correctly.</div>
+                    <button type="submit" class="btn-primary w-full mt-6 flex items-center justify-center gap-2 group">
+                        Initialize Protocol 
+                        <span class="transition-transform group-hover:translate-x-1">→</span>
+                    </button>
+                    <div id="errorMsg" class="text-rose-500 text-xs hidden text-center mt-3 bg-rose-500/10 py-2 rounded-lg border border-rose-500/20">Please complete all fields to proceed.</div>
                 </form>
             </section>
 
-            <section id="resultsSection" class="lg:col-span-8 hidden opacity-0 transition-opacity duration-500 flex flex-col gap-6">
+            <!-- Results Section -->
+            <section id="resultsSection" class="lg:col-span-8 hidden opacity-0 translate-y-4 transition-all duration-700 ease-out flex flex-col gap-6">
                 
+                <!-- Top Metrics -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="card p-5 text-center flex flex-col justify-center border-l-4 border-l-[#7A7369]">
-                        <h3 class="text-sm text-[#7A7369] font-medium uppercase tracking-wider mb-1">Basal Metabolic Rate</h3>
-                        <div class="text-3xl font-bold text-[#3F3A36]" id="resBMR">--</div>
-                        <p class="text-xs text-[#7A7369] mt-1">Calories burned at complete rest.</p>
+                    <div class="glass-card p-5 flex flex-col justify-center border-t-2 border-t-zinc-700">
+                        <h3 class="text-[10px] font-semibold uppercase tracking-widest mb-1.5 text-zinc-500">Basal Metabolic Rate</h3>
+                        <div class="flex items-baseline gap-1">
+                            <div class="text-3xl font-bold text-zinc-100 tracking-tight" id="resBMR">--</div>
+                            <span class="text-xs text-zinc-500 font-medium">kcal</span>
+                        </div>
                     </div>
-                    <div class="card p-5 text-center flex flex-col justify-center border-l-4 border-l-[#E5B15D]">
-                        <h3 class="text-sm text-[#7A7369] font-medium uppercase tracking-wider mb-1">Maintenance (TDEE)</h3>
-                        <div class="text-3xl font-bold text-[#3F3A36]" id="resTDEE">--</div>
-                        <p class="text-xs text-[#7A7369] mt-1">Total daily energy expenditure.</p>
+                    <div class="glass-card p-5 flex flex-col justify-center border-t-2 border-t-zinc-500">
+                        <h3 class="text-[10px] font-semibold uppercase tracking-widest mb-1.5 text-zinc-400">Maintenance (TDEE)</h3>
+                        <div class="flex items-baseline gap-1">
+                            <div class="text-3xl font-bold text-zinc-100 tracking-tight" id="resTDEE">--</div>
+                            <span class="text-xs text-zinc-500 font-medium">kcal</span>
+                        </div>
                     </div>
-                    <div class="card p-5 text-center flex flex-col justify-center border-l-4 border-l-[#5D7052] bg-[#F4F6F3]">
-                        <h3 class="text-sm font-bold text-[#5D7052] uppercase tracking-wider mb-1">Target Calories</h3>
-                        <div class="text-4xl font-bold text-[#5D7052]" id="resTarget">--</div>
-                        <p class="text-xs font-medium text-[#4A5A41] mt-1" id="resGoalText">Based on your goal.</p>
+                    <div class="glass-card p-5 flex flex-col justify-center border-t-2 border-t-rose-500 relative overflow-hidden bg-rose-950/20">
+                        <div class="absolute -right-10 -top-10 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl"></div>
+                        <h3 class="text-[10px] font-bold uppercase tracking-widest mb-1.5 text-rose-400 relative z-10">Target Energy Output</h3>
+                        <div class="flex items-baseline gap-1 relative z-10">
+                            <div class="text-4xl font-bold text-white tracking-tight" id="resTarget">--</div>
+                            <span class="text-sm text-rose-300 font-medium">kcal</span>
+                        </div>
+                        <p class="text-[10px] font-medium mt-1.5 text-rose-200/60 relative z-10 uppercase tracking-wider" id="resGoalText">Objective</p>
                     </div>
                 </div>
 
-                <div class="card p-6">
-                    <div class="mb-4">
-                        <h2 class="text-xl font-semibold border-b border-[#E5E0D8] pb-2 mb-2">Macronutrient Distribution</h2>
-                        <p class="text-xs text-[#7A7369]">A suggested optimal split based on your target calories. High protein preserves lean mass, adequate fats support hormone function, and remaining calories are allocated to carbohydrates for energy.</p>
+                <!-- Macro Distribution -->
+                <div class="glass-card p-6 md:p-8">
+                    <div class="mb-8 md:mb-2 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+                        <div>
+                            <h2 class="text-xl font-semibold text-white tracking-tight mb-2">Macronutrient Architecture</h2>
+                            <p class="text-xs text-zinc-400 max-w-lg leading-relaxed">Dynamically scaled for optimal body composition. Protein anchored at <span id="proteinMultiplierText" class="font-bold text-white">--</span>g/kg. Fats locked at 25% for endocrine health. Carbs allocated for training demands.</p>
+                        </div>
                     </div>
                     
-                    <div class="flex flex-col md:flex-row items-center gap-8">
-                        <div class="w-full md:w-1/2">
-                            <div class="chart-container">
+                    <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                        <div class="w-full md:w-1/2 relative flex justify-center">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none rounded-full"></div>
+                            <div class="chart-container relative z-10 drop-shadow-2xl">
                                 <canvas id="macroChart"></canvas>
                             </div>
                         </div>
-                        <div class="w-full md:w-1/2 space-y-4">
-                            <div class="flex justify-between items-center p-3 rounded bg-[#FAF5F2]">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-3 h-3 rounded-full bg-[#D97757]"></div>
-                                    <span class="font-medium text-[#3F3A36]">Protein</span>
+                        
+                        <div class="w-full md:w-1/2 flex flex-col gap-3">
+                            <div class="flex justify-between items-center p-4 rounded-xl bg-zinc-900/50 border border-white/5 hover:bg-zinc-900/80 transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)]"></div>
+                                    <div>
+                                        <div class="font-medium text-zinc-100 text-sm">Protein</div>
+                                        <div class="text-[10px] text-zinc-500">Muscle Synthesis</div>
+                                    </div>
                                 </div>
                                 <div class="text-right">
-                                    <div class="font-bold text-lg text-[#D97757]" id="resProtein">-- g</div>
-                                    <div class="text-xs text-[#7A7369]">4 cals/g</div>
+                                    <div class="font-bold text-xl text-white tracking-tight" id="resProtein">-- g</div>
+                                    <div class="text-[10px] text-zinc-500">4 kcal/g</div>
                                 </div>
                             </div>
-                            <div class="flex justify-between items-center p-3 rounded bg-[#F8F6E6]">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-3 h-3 rounded-full bg-[#E5B15D]"></div>
-                                    <span class="font-medium text-[#3F3A36]">Fats</span>
+                            <div class="flex justify-between items-center p-4 rounded-xl bg-zinc-900/50 border border-white/5 hover:bg-zinc-900/80 transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-3 h-3 rounded-full bg-rose-800 shadow-[0_0_12px_rgba(159,18,57,0.6)]"></div>
+                                    <div>
+                                        <div class="font-medium text-zinc-100 text-sm">Fats</div>
+                                        <div class="text-[10px] text-zinc-500">Hormonal Function</div>
+                                    </div>
                                 </div>
                                 <div class="text-right">
-                                    <div class="font-bold text-lg text-[#E5B15D]" id="resFat">-- g</div>
-                                    <div class="text-xs text-[#7A7369]">9 cals/g</div>
+                                    <div class="font-bold text-xl text-white tracking-tight" id="resFat">-- g</div>
+                                    <div class="text-[10px] text-zinc-500">9 kcal/g</div>
                                 </div>
                             </div>
-                            <div class="flex justify-between items-center p-3 rounded bg-[#F4F6F3]">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-3 h-3 rounded-full bg-[#5D7052]"></div>
-                                    <span class="font-medium text-[#3F3A36]">Carbohydrates</span>
+                            <div class="flex justify-between items-center p-4 rounded-xl bg-zinc-900/50 border border-white/5 hover:bg-zinc-900/80 transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-3 h-3 rounded-full bg-zinc-600"></div>
+                                    <div>
+                                        <div class="font-medium text-zinc-100 text-sm">Carbohydrates</div>
+                                        <div class="text-[10px] text-zinc-500">Energy & Recovery</div>
+                                    </div>
                                 </div>
                                 <div class="text-right">
-                                    <div class="font-bold text-lg text-[#5D7052]" id="resCarbs">-- g</div>
-                                    <div class="text-xs text-[#7A7369]">4 cals/g</div>
+                                    <div class="font-bold text-xl text-white tracking-tight" id="resCarbs">-- g</div>
+                                    <div class="text-[10px] text-zinc-500">4 kcal/g</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card p-6">
-                    <div class="mb-4">
-                        <h2 class="text-xl font-semibold border-b border-[#E5E0D8] pb-2 mb-2">Essential Micronutrients & Electrolytes</h2>
-                        <p class="text-xs text-[#7A7369]">Recommended Daily Allowances optimized for the hot Philippine weather. Enhanced focus on electrolytes (Sodium, Potassium, Magnesium) lost through sweat, and Vitamin C for immune support during seasonal changes.</p>
+                <!-- Advanced Performance & Sleep Protocol -->
+                <div class="glass-card p-6 md:p-8 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-600 via-rose-400 to-transparent opacity-50"></div>
+                    <div class="mb-6">
+                        <h2 class="text-lg font-semibold text-white tracking-tight mb-1">Performance & Recovery Protocol</h2>
+                        <p class="text-xs text-zinc-400">Environmentally and biologically adapted for peak performance.</p>
                     </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="microGrid">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                        <div class="bg-black/30 border border-white/5 rounded-xl p-4 md:p-5 flex flex-col items-center justify-center text-center metric-card-hover group">
+                            <div class="text-2xl mb-2 grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all">💧</div>
+                            <div class="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Hydration</div>
+                            <div class="text-white font-bold text-xl tracking-tight mb-1" id="optWater">-- L</div>
+                            <div class="text-[9px] text-zinc-600">+500ml for PH heat</div>
+                        </div>
+                        <div class="bg-black/30 border border-white/5 rounded-xl p-4 md:p-5 flex flex-col items-center justify-center text-center metric-card-hover group">
+                            <div class="text-2xl mb-2 grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all">⚡</div>
+                            <div class="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Creatine</div>
+                            <div class="text-white font-bold text-xl tracking-tight mb-1" id="optCreatine">-- g</div>
+                            <div class="text-[9px] text-zinc-600">Optimal 0.04g/kg</div>
+                        </div>
+                        <div class="bg-black/30 border border-white/5 rounded-xl p-4 md:p-5 flex flex-col items-center justify-center text-center metric-card-hover group">
+                            <div class="text-2xl mb-2 grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all">🥩</div>
+                            <div class="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Protein/Meal</div>
+                            <div class="text-white font-bold text-xl tracking-tight mb-1" id="optProteinMeal">-- g</div>
+                            <div class="text-[9px] text-zinc-600">4 meals to max MPS</div>
+                        </div>
+                        <div class="bg-black/30 border border-white/5 rounded-xl p-4 md:p-5 flex flex-col items-center justify-center text-center metric-card-hover group">
+                            <div class="text-2xl mb-2 grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all">🌾</div>
+                            <div class="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Fiber</div>
+                            <div class="text-white font-bold text-xl tracking-tight mb-1" id="optFiber">-- g</div>
+                            <div class="text-[9px] text-zinc-600">14g per 1000kcal</div>
+                        </div>
+                        <div class="bg-black/30 border border-white/5 rounded-xl p-4 md:p-5 flex flex-col items-center justify-center text-center metric-card-hover group">
+                            <div class="text-2xl mb-2 grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all">🌙</div>
+                            <div class="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Sleep Duration</div>
+                            <div class="text-white font-bold text-xl tracking-tight mb-1" id="optSleep">7.5-9 <span class="text-sm font-medium">hrs</span></div>
+                            <div class="text-[9px] text-zinc-600">Max Growth Hormone</div>
+                        </div>
+                        <div class="bg-black/30 border border-white/5 rounded-xl p-4 md:p-5 flex flex-col items-center justify-center text-center metric-card-hover group">
+                            <div class="text-2xl mb-2 grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all">🛏️</div>
+                            <div class="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold mb-1">Optimal Bedtime</div>
+                            <div class="text-white font-bold text-lg tracking-tight mb-1">10:00 PM</div>
+                            <div class="text-[9px] text-zinc-600">Aligns with circadian rhythm</div>
+                        </div>
                     </div>
-                    <p class="text-[10px] text-right text-[#7A7369] mt-4">*mcg = micrograms, mg = milligrams. Hydration is crucial in this climate; drink at least 2-3 liters of water daily.</p>
                 </div>
 
-                <!-- AI Feature Section -->
-                <div class="card p-6 bg-gradient-to-r from-[#F4F6F3] to-[#F9F7F1] border-[#5D7052] border-opacity-30">
-                    <div class="mb-4 flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                <!-- Comprehensive Micronutrients -->
+                <div class="glass-card p-6 md:p-8">
+                    <div class="mb-6">
+                        <h2 class="text-lg font-semibold text-white tracking-tight mb-1">Comprehensive Micronutrients (A-Z)</h2>
+                        <p class="text-xs text-zinc-400 max-w-xl leading-relaxed">Estimated Daily Allowances (RDAs) based on sex. Meeting these baselines ensures optimal metabolic function, testosterone/hormone production, and immune defense.</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" id="microGrid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Supplement Stack Recommendations -->
+                <div class="glass-card p-6 md:p-8 border border-rose-900/30">
+                    <div class="mb-6">
+                        <h2 class="text-lg font-semibold text-rose-500 tracking-tight mb-1">Optimal Supplement Stack</h2>
+                        <p class="text-xs text-zinc-400 max-w-xl">Science-backed recommendations and popular brands available in the Philippines to easily hit your targets.</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="supp-card p-4 rounded-xl bg-black/20 border border-white/5 flex flex-col md:flex-row gap-4 items-start md:items-center">
+                            <div class="text-3xl bg-zinc-900 w-12 h-12 flex items-center justify-center rounded-lg shadow-inner">🥛</div>
+                            <div class="flex-1">
+                                <h4 class="text-white font-medium text-sm mb-1">Whey Protein (Concentrate or Isolate)</h4>
+                                <p class="text-xs text-zinc-400 leading-relaxed mb-2">Use if you struggle to hit your daily protein target through whole foods alone. Fast-absorbing, perfect post-workout.</p>
+                                <p class="text-[10px] text-zinc-500"><strong>Top PH Brands:</strong> Optimum Nutrition (Gold Standard), Athlene, Wheyl Nutrition Co., Rule 1</p>
+                            </div>
+                        </div>
+
+                        <div class="supp-card p-4 rounded-xl bg-black/20 border border-white/5 flex flex-col md:flex-row gap-4 items-start md:items-center">
+                            <div class="text-3xl bg-zinc-900 w-12 h-12 flex items-center justify-center rounded-lg shadow-inner">💪</div>
+                            <div class="flex-1">
+                                <h4 class="text-white font-medium text-sm mb-1">Creatine Monohydrate</h4>
+                                <p class="text-xs text-zinc-400 leading-relaxed mb-2">The most researched supplement globally. Increases ATP (energy) production, strength, and muscle hydration.</p>
+                                <p class="text-[10px] text-zinc-500"><strong>Top Brands:</strong> Nutricost, Athlene, MuscleTech (Ensure it says "Monohydrate")</p>
+                            </div>
+                        </div>
+
+                        <div class="supp-card p-4 rounded-xl bg-black/20 border border-white/5 flex flex-col md:flex-row gap-4 items-start md:items-center">
+                            <div class="text-3xl bg-zinc-900 w-12 h-12 flex items-center justify-center rounded-lg shadow-inner">⚡</div>
+                            <div class="flex-1">
+                                <h4 class="text-white font-medium text-sm mb-1">Pre-Workout / Caffeine</h4>
+                                <p class="text-xs text-zinc-400 leading-relaxed mb-2">Optional. Use for intense sessions. Plain black coffee is a highly effective, cheap alternative.</p>
+                                <p class="text-[10px] text-zinc-500"><strong>Top Brands:</strong> Cellucor C4, ABE, Optimum Nutrition Amino Energy, Nescafe Classic (Budget)</p>
+                            </div>
+                        </div>
+
+                        <div class="supp-card p-4 rounded-xl bg-rose-950/10 border border-rose-900/20 flex flex-col md:flex-row gap-4 items-start md:items-center">
+                            <div class="text-3xl bg-rose-900/20 w-12 h-12 flex items-center justify-center rounded-lg shadow-inner">⚠️</div>
+                            <div class="flex-1">
+                                <h4 class="text-rose-400 font-medium text-sm mb-1">BCAAs / EAAs (Evidence-Based Note)</h4>
+                                <p class="text-xs text-zinc-400 leading-relaxed">Science shows BCAAs are largely <strong class="text-zinc-300">useless</strong> if you are already consuming adequate protein (which contains all BCAAs). Save your money, or use EAAs *only* if training entirely fasted.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Generation Block -->
+                <div class="glass-card p-6 md:p-8 bg-gradient-to-br from-zinc-900/80 to-rose-950/10 border-rose-900/20">
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
                         <div>
-                            <h2 class="text-xl font-semibold text-[#5D7052] pb-1">AI Coach: Pinoy Meals & Fitness</h2>
-                            <p class="text-xs text-[#7A7369]">Let Gemini translate your targets into a practical Filipino meal plan and a weather-appropriate workout routine.</p>
+                            <h2 class="text-lg font-semibold text-white tracking-tight mb-1 flex items-center gap-2">
+                                <span class="w-1.5 h-4 bg-rose-500 rounded-sm"></span>
+                                AI Nutrition Planner
+                            </h2>
+                            <p class="text-xs text-zinc-400">Generate a custom Pinoy meal plan utilizing your calculated metrics.</p>
                         </div>
-                        <button id="btnGenerateMealPlan" class="btn-primary w-full md:w-auto text-sm flex items-center justify-center gap-2 whitespace-nowrap">
-                            ✨ Generate Plan
+                        <button id="btnGenerateMealPlan" class="btn-primary whitespace-nowrap shadow-rose-900/20">
+                            Generate Plan
                         </button>
                     </div>
                     
-                    <div id="aiLoading" class="hidden mt-4 text-sm text-[#7A7369] flex items-center gap-2 justify-center py-4">
-                        <svg class="animate-spin h-5 w-5 text-[#5D7052]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        Consulting Gemini...
+                    <div id="aiLoading" class="hidden mt-6 text-sm text-zinc-400 flex flex-col items-center gap-3 justify-center py-8">
+                        <div class="loader"></div>
+                        <span class="tracking-wide text-xs uppercase">Synthesizing Protocol...</span>
                     </div>
                     
-                    <div id="aiOutput" class="hidden mt-4 p-5 bg-white rounded-lg border border-[#E5E0D8] text-sm text-[#3F3A36]">
+                    <div id="aiOutput" class="hidden mt-6 p-6 bg-black/40 rounded-xl border border-white/5 text-sm text-zinc-300 leading-relaxed shadow-inner">
                         <!-- AI response injected here -->
                     </div>
                 </div>
 
             </section>
         </div>
+    </div>
+
+    <!-- Optimal AI Chat Widget -->
+    <div id="chatWidgetContainer" class="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
+        
+        <!-- Chat Window -->
+        <div id="chatWindow" class="chat-transition chat-hidden w-80 md:w-[380px] bg-zinc-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex-col overflow-hidden mb-4 flex">
+            <div class="bg-gradient-to-r from-rose-600 to-rose-700 text-white p-4 flex justify-between items-center border-b border-rose-800/50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm shadow-inner">🤖</div>
+                    <div>
+                        <h3 class="font-semibold text-sm tracking-wide">Coach AI</h3>
+                        <p class="text-[10px] text-rose-200 font-medium">Philippine Edition</p>
+                    </div>
+                </div>
+                <button id="closeChatBtn" class="text-rose-200 hover:text-white transition-colors p-1 rounded-md hover:bg-white/10">✕</button>
+            </div>
+            
+            <div id="chatMessages" class="p-4 h-[350px] overflow-y-auto flex flex-col gap-4 bg-black/20 text-sm">
+                <div class="bot-msg p-3.5 shadow-md">
+                    Kamusta! I am your evidence-based AI Coach. Ask me about training, nutrition, sleep, or how to fit local foods like rice and bangus into your macros. How can I assist?
+                </div>
+            </div>
+
+            <div id="chatLoading" class="hidden px-4 py-2 bg-black/40 text-[10px] text-zinc-500 uppercase tracking-widest border-t border-white/5">
+                <span class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span> Processing
+                </span>
+            </div>
+
+            <div class="p-3 bg-zinc-900 border-t border-white/5 flex gap-2">
+                <input type="text" id="chatInput" placeholder="Message Coach..." class="flex-1 px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl focus:outline-none focus:border-rose-500 focus:bg-black/80 transition-all text-zinc-200 text-sm placeholder-zinc-600" autocomplete="off">
+                <button id="sendChatBtn" class="bg-rose-600 text-white p-2 rounded-xl hover:bg-rose-500 transition-colors flex items-center justify-center w-11 h-11 shadow-lg shadow-rose-900/20">
+                    ➤
+                </button>
+            </div>
+        </div>
+
+        <!-- Launcher Button -->
+        <button id="chatLauncherBtn" class="bg-zinc-900 text-white w-14 h-14 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:bg-zinc-800 transition-all duration-300 transform hover:scale-105 flex items-center justify-center pointer-events-auto border border-white/10 group relative">
+            <div class="absolute inset-0 rounded-full border border-rose-500/50 scale-[1.15] opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-500"></div>
+            <span class="text-xl group-hover:text-rose-400 transition-colors">💬</span>
+        </button>
     </div>
 
     <script>
@@ -258,12 +607,19 @@
             let currentUnit = 'metric';
             let macroChartInstance = null;
             
-            // --- AI State Variables ---
             const apiKey = ""; 
             const btnGenerateMealPlan = document.getElementById('btnGenerateMealPlan');
             const aiLoading = document.getElementById('aiLoading');
             const aiOutput = document.getElementById('aiOutput');
             let currentProfile = {};
+            
+            const chatLauncherBtn = document.getElementById('chatLauncherBtn');
+            const closeChatBtn = document.getElementById('closeChatBtn');
+            const chatWindow = document.getElementById('chatWindow');
+            const chatInput = document.getElementById('chatInput');
+            const sendChatBtn = document.getElementById('sendChatBtn');
+            const chatMessages = document.getElementById('chatMessages');
+            const chatLoading = document.getElementById('chatLoading');
 
             unitBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -291,16 +647,55 @@
                 });
             });
 
+            // Comprehensive A-Z Micronutrients
             const micronutrientData = {
                 male: {
-                    'Potassium (Sweat Loss)': '3400 mg', 'Sodium (Electrolyte)': '< 2300 mg', 'Magnesium (Energy)': '400 mg', 'Calcium': '1000 mg',
-                    'Vitamin C (Immunity)': '90 mg', 'Vitamin D (Sunlight)': '15 mcg', 'Zinc': '11 mg', 'Iron': '8 mg',
-                    'Vitamin A': '900 mcg', 'Vitamin E': '15 mg', 'Vitamin K': '120 mcg', 'Fiber': '38 g'
+                    'Vit A (Vision/Immune)': '900 mcg',
+                    'Vit B1 (Thiamin)': '1.2 mg',
+                    'Vit B2 (Riboflavin)': '1.3 mg',
+                    'Vit B3 (Niacin)': '16 mg',
+                    'Vit B5 (Pantothenic)': '5 mg',
+                    'Vit B6 (Amino Synth)': '1.3 mg',
+                    'Vit B7 (Biotin)': '30 mcg',
+                    'Vit B9 (Folate)': '400 mcg',
+                    'Vit B12 (Nerves/Blood)': '2.4 mcg',
+                    'Vit C (Immunity/Skin)': '90 mg',
+                    'Vit D (Bones/Testosterone)': '15-20 mcg',
+                    'Vit E (Antioxidant)': '15 mg',
+                    'Vit K (Blood/Bones)': '120 mcg',
+                    'Calcium (Bones)': '1000 mg',
+                    'Iron (Oxygen)': '8 mg',
+                    'Magnesium (Energy/Sleep)': '400 mg',
+                    'Zinc (Hormones)': '11 mg',
+                    'Potassium (Muscle/Sweat)': '3400 mg',
+                    'Sodium (Electrolyte)': '< 2300 mg',
+                    'Iodine (Thyroid)': '150 mcg',
+                    'Selenium (Metabolism)': '55 mcg',
+                    'Omega-3 (EPA/DHA)': '1.6 g'
                 },
                 female: {
-                    'Potassium (Sweat Loss)': '2600 mg', 'Sodium (Electrolyte)': '< 2300 mg', 'Magnesium (Energy)': '310 mg', 'Calcium': '1000 mg',
-                    'Vitamin C (Immunity)': '75 mg', 'Vitamin D (Sunlight)': '15 mcg', 'Zinc': '8 mg', 'Iron': '18 mg',
-                    'Vitamin A': '700 mcg', 'Vitamin E': '15 mg', 'Vitamin K': '90 mcg', 'Fiber': '25 g'
+                    'Vit A (Vision/Immune)': '700 mcg',
+                    'Vit B1 (Thiamin)': '1.1 mg',
+                    'Vit B2 (Riboflavin)': '1.1 mg',
+                    'Vit B3 (Niacin)': '14 mg',
+                    'Vit B5 (Pantothenic)': '5 mg',
+                    'Vit B6 (Amino Synth)': '1.3 mg',
+                    'Vit B7 (Biotin)': '30 mcg',
+                    'Vit B9 (Folate)': '400 mcg',
+                    'Vit B12 (Nerves/Blood)': '2.4 mcg',
+                    'Vit C (Immunity/Skin)': '75 mg',
+                    'Vit D (Bones/Hormones)': '15-20 mcg',
+                    'Vit E (Antioxidant)': '15 mg',
+                    'Vit K (Blood/Bones)': '90 mcg',
+                    'Calcium (Bones)': '1000 mg',
+                    'Iron (Oxygen)': '18 mg',
+                    'Magnesium (Energy/Sleep)': '310 mg',
+                    'Zinc (Hormones)': '8 mg',
+                    'Potassium (Muscle/Sweat)': '2600 mg',
+                    'Sodium (Electrolyte)': '< 2300 mg',
+                    'Iodine (Thyroid)': '150 mcg',
+                    'Selenium (Metabolism)': '55 mcg',
+                    'Omega-3 (EPA/DHA)': '1.1 g'
                 }
             };
 
@@ -346,19 +741,23 @@
                 let tdee = bmr * activity;
 
                 let targetCalories = tdee;
-                let goalText = "Maintenance Level";
+                let goalText = "Maintenance";
+                let proteinMultiplier = 2.0; 
                 
-                switch(goalStr) {
-                    case 'cut_mild': targetCalories = tdee - 250; goalText = "Mild Deficit"; break;
-                    case 'cut': targetCalories = tdee - 500; goalText = "Moderate Deficit"; break;
-                    case 'bulk_mild': targetCalories = tdee + 250; goalText = "Mild Surplus"; break;
-                    case 'bulk': targetCalories = tdee + 500; goalText = "Moderate Surplus"; break;
+                if (goalStr.includes('cut')) {
+                    targetCalories = goalStr === 'cut' ? tdee - 500 : tdee - 250;
+                    goalText = goalStr === 'cut' ? "Moderate Deficit" : "Mild Deficit";
+                    proteinMultiplier = 2.4; 
+                } else if (goalStr.includes('bulk')) {
+                    targetCalories = goalStr === 'bulk' ? tdee + 500 : tdee + 250;
+                    goalText = goalStr === 'bulk' ? "Moderate Surplus" : "Lean Bulk";
+                    proteinMultiplier = 1.8; 
                 }
 
-                let proteinGrams = weightKg * 2.2; 
+                let proteinGrams = weightKg * proteinMultiplier; 
                 let proteinCals = proteinGrams * 4;
 
-                let fatCals = targetCalories * 0.25;
+                let fatCals = targetCalories * 0.25; 
                 let fatGrams = fatCals / 9;
 
                 let carbCals = targetCalories - proteinCals - fatCals;
@@ -369,6 +768,11 @@
                     proteinGrams = (targetCalories - fatCals) / 4; 
                 }
 
+                let optimalWater = ((weightKg * 0.04) + 0.5).toFixed(1); 
+                let optimalCreatine = (weightKg * 0.04).toFixed(1); 
+                let optimalProteinPerMeal = Math.round(proteinGrams / 4); 
+                let optimalFiber = Math.round((targetCalories / 1000) * 14); 
+
                 updateUI(
                     Math.round(bmr), 
                     Math.round(tdee), 
@@ -377,13 +781,19 @@
                     Math.round(proteinGrams), 
                     Math.round(fatGrams), 
                     Math.round(carbGrams),
-                    gender
+                    proteinMultiplier,
+                    optimalWater,
+                    optimalCreatine,
+                    optimalProteinPerMeal,
+                    optimalFiber,
+                    gender,
+                    weightKg
                 );
             }
 
-            function updateUI(bmr, tdee, target, goalText, protein, fat, carbs, gender) {
+            function updateUI(bmr, tdee, target, goalText, protein, fat, carbs, pMult, water, creatine, mps, fiber, gender, weightKg) {
                 
-                currentProfile = { target, goalText, protein, fat, carbs };
+                currentProfile = { target, goalText, protein, fat, carbs, water, creatine, mps, fiber, weightKg };
 
                 document.getElementById('resBMR').innerText = bmr;
                 document.getElementById('resTDEE').innerText = tdee;
@@ -393,14 +803,20 @@
                 document.getElementById('resProtein').innerText = protein + ' g';
                 document.getElementById('resFat').innerText = fat + ' g';
                 document.getElementById('resCarbs').innerText = carbs + ' g';
+                document.getElementById('proteinMultiplierText').innerText = pMult.toFixed(1);
+
+                document.getElementById('optWater').innerText = water + ' L';
+                document.getElementById('optCreatine').innerText = creatine + ' g';
+                document.getElementById('optProteinMeal').innerText = '~' + mps + ' g';
+                document.getElementById('optFiber').innerText = fiber + ' g';
 
                 updateChart(protein * 4, fat * 9, carbs * 4);
-
                 populateMicros(gender);
 
                 resultsSection.classList.remove('hidden');
+                
                 setTimeout(() => {
-                    resultsSection.classList.remove('opacity-0');
+                    resultsSection.classList.remove('opacity-0', 'translate-y-4');
                     resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 50);
             }
@@ -418,24 +834,33 @@
                         labels: ['Protein', 'Fats', 'Carbs'],
                         datasets: [{
                             data: [pCals, fCals, cCals],
-                            backgroundColor: ['#D97757', '#E5B15D', '#5D7052'],
-                            borderWidth: 0,
-                            hoverOffset: 4
+                            backgroundColor: ['#f43f5e', '#9f1239', '#52525b'],
+                            borderWidth: 3,
+                            borderColor: '#09090b',
+                            hoverOffset: 8
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        cutout: '70%',
+                        cutout: '78%',
                         plugins: {
                             legend: { display: false },
                             tooltip: {
+                                backgroundColor: 'rgba(9, 9, 11, 0.95)',
+                                titleColor: '#f4f4f5',
+                                bodyColor: '#d4d4d8',
+                                borderColor: 'rgba(255,255,255,0.1)',
+                                borderWidth: 1,
+                                padding: 12,
+                                boxPadding: 6,
+                                usePointStyle: true,
                                 callbacks: {
                                     label: function(context) {
                                         let label = context.label || '';
                                         if (label) { label += ': '; }
                                         if (context.parsed !== null) {
-                                            label += Math.round(context.parsed) + ' cals';
+                                            label += Math.round(context.parsed) + ' kcal';
                                         }
                                         return label;
                                     }
@@ -453,16 +878,16 @@
 
                 for (const [nutrient, amount] of Object.entries(data)) {
                     const card = document.createElement('div');
-                    card.className = 'bg-[#FAFAFA] border border-[#E5E0D8] rounded p-3 text-center';
+                    card.className = 'bg-black/30 border border-white/5 rounded-xl p-3 text-center transition-all hover:bg-white/5 hover:border-white/10';
                     card.innerHTML = `
-                        <div class="text-[#7A7369] text-xs font-medium mb-1">${nutrient}</div>
-                        <div class="text-[#3F3A36] font-bold text-sm">${amount}</div>
+                        <div class="text-zinc-500 text-[10px] uppercase tracking-wider font-semibold mb-1 truncate" title="${nutrient}">${nutrient}</div>
+                        <div class="text-white font-medium text-sm tracking-tight">${amount}</div>
                     `;
                     grid.appendChild(card);
                 }
             }
 
-            // --- Gemini API Integration ---
+            // --- Gemini API Integration (Nutrition Planner) ---
             async function fetchWithRetry(url, options, retries = 5) {
                 const delays = [1000, 2000, 4000, 8000, 16000];
                 for (let i = 0; i < retries; i++) {
@@ -488,22 +913,21 @@
                 
                 const activityLevelText = document.getElementById('activity').options[document.getElementById('activity').selectedIndex].text;
 
-                const prompt = `Act as an expert nutritionist and fitness coach based in the Philippines.
+                const prompt = `Act as an elite sports nutritionist based in the Philippines.
                 My goal is "${currentProfile.goalText}". 
-                My targets: exactly ${currentProfile.target} calories, ${currentProfile.protein}g protein, ${currentProfile.fat}g fat, and ${currentProfile.carbs}g carbs. 
-                My current activity level: ${activityLevelText}.
+                Exact targets: ${currentProfile.target}kcal, ${currentProfile.protein}g protein, ${currentProfile.fat}g fat, ${currentProfile.carbs}g carbs, ${currentProfile.fiber}g fiber. Activity: ${activityLevelText}.
                 
-                Please provide two things:
-                1. A 1-day sample meal plan using ONLY ingredients and meals easily accessible and common in the Philippines (e.g., local fish like bangus/tilapia, chicken, pork, rice, local vegetables like kangkong/monggo/sitaw, local fruits like mango/papaya/banana). Include estimated macros for each meal to show how it adds up to my exact targets.
-                2. A suggested daily workout routine tailored to my activity level. Include specific advice on WHEN to exercise considering the extremely hot and humid Philippine weather (e.g., avoiding the midday sun, prioritizing hydration).
+                Provide a structured 4-meal Pinoy plan using accessible local ingredients (bangus, chicken, rice, kamote, kangkong, etc.). 
+                Ensure each meal hits roughly ~${currentProfile.mps}g protein for MPS.
+                Include a brief "Recovery Protocol" mentioning ${currentProfile.water}L water, ${currentProfile.creatine}g creatine, 7.5-9 hours of sleep aiming for 10PM, and heat-adapted training times.
                 
-                Format your response using ONLY basic HTML tags like <h3>, <ul>, <li>, <strong>, and <p>. Do not use markdown blocks or backticks. Keep it concise, practical, and highly motivating.`;
+                Format using basic HTML: <h3>, <ul>, <li>, <strong>, <p>. No markdown blocks.`;
 
                 try {
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
                     const payload = {
                         contents: [{ parts: [{ text: prompt }] }],
-                        systemInstruction: { parts: [{ text: "You are a helpful, encouraging nutrition assistant." }] }
+                        systemInstruction: { parts: [{ text: "You are an elite, evidence-based sports nutrition AI assistant." }] }
                     };
 
                     const result = await fetchWithRetry(url, {
@@ -512,18 +936,90 @@
                         body: JSON.stringify(payload)
                     });
 
-                    let text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't generate a plan at this time.";
-                    text = text.replace(/```html/g, '').replace(/```/g, ''); // Cleanup markdown bounds
+                    let text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Generation failed. Please try again.";
+                    text = text.replace(/```html/g, '').replace(/```/g, '');
 
                     aiOutput.innerHTML = text;
                     aiOutput.classList.remove('hidden');
                 } catch (error) {
-                    aiOutput.innerHTML = `<p class="text-red-500">Error connecting to AI Assistant. Please try again later.</p>`;
+                    aiOutput.innerHTML = `<p class="text-rose-500">Error connecting to AI. Please try again later.</p>`;
                     aiOutput.classList.remove('hidden');
                 } finally {
                     btnGenerateMealPlan.disabled = false;
                     aiLoading.classList.add('hidden');
                 }
+            });
+
+            // --- Chat Widget Logic ---
+            chatLauncherBtn.addEventListener('click', () => {
+                chatWindow.classList.remove('chat-hidden');
+                chatWindow.classList.add('chat-visible');
+                chatLauncherBtn.style.opacity = '0';
+                chatLauncherBtn.style.transform = 'scale(0.8)';
+                chatLauncherBtn.style.pointerEvents = 'none';
+                setTimeout(() => chatInput.focus(), 300);
+            });
+
+            closeChatBtn.addEventListener('click', () => {
+                chatWindow.classList.remove('chat-visible');
+                chatWindow.classList.add('chat-hidden');
+                chatLauncherBtn.style.opacity = '1';
+                chatLauncherBtn.style.transform = 'scale(1)';
+                chatLauncherBtn.style.pointerEvents = 'auto';
+            });
+
+            const handleChatSubmit = async () => {
+                const message = chatInput.value.trim();
+                if (!message) return;
+
+                appendChatMessage(message, 'user');
+                chatInput.value = '';
+                chatLoading.classList.remove('hidden');
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                let contextString = "";
+                if (currentProfile.target) {
+                    contextString = `\nContext: Goal is ${currentProfile.goalText}. Targets: ${currentProfile.target} cals, ${currentProfile.protein}g pro, ${currentProfile.fat}g fat, ${currentProfile.carbs}g carbs.`;
+                }
+
+                const systemPrompt = `You are a highly knowledgeable fitness coach in the Philippines. 
+                CRITICAL INSTRUCTIONS: Cater to Filipino lifestyle (local foods, hot climate). Be pragmatic about rice. Use brief HTML (<p>, <ul>, <li>, <strong>). Keep responses concise and friendly (slight Taglish is okay). ${contextString}`;
+
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                    const payload = {
+                        contents: [{ parts: [{ text: message }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    };
+
+                    const result = await fetchWithRetry(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    let text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Network issue. Try again!";
+                    text = text.replace(/```html/g, '').replace(/```/g, ''); 
+
+                    appendChatMessage(text, 'bot');
+                } catch (error) {
+                    appendChatMessage("<p class='text-rose-500'>Connection error.</p>", 'bot');
+                } finally {
+                    chatLoading.classList.add('hidden');
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            };
+
+            function appendChatMessage(text, sender) {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = sender === 'user' ? 'user-msg p-3 shadow-md max-w-[85%]' : 'bot-msg p-3 shadow-md max-w-[90%]';
+                msgDiv.innerHTML = text;
+                chatMessages.appendChild(msgDiv);
+            }
+
+            sendChatBtn.addEventListener('click', handleChatSubmit);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleChatSubmit();
             });
 
         });
