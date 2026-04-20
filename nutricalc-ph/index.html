@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Nutritional Requirements Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #F9F7F1; color: #3F3A36; }
+        .card { background-color: #FFFFFF; border: 1px solid #E5E0D8; border-radius: 0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+        .input-field { width: 100%; padding: 0.75rem; border: 1px solid #D1CFC9; border-radius: 0.5rem; background-color: #FAFAFA; transition: border-color 0.2s; }
+        .input-field:focus { outline: none; border-color: #5D7052; ring: 2px solid #5D7052; }
+        .btn-primary { background-color: #5D7052; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; transition: background-color 0.2s; }
+        .btn-primary:hover { background-color: #4A5A41; }
+        .toggle-btn { padding: 0.5rem 1rem; border: 1px solid #D1CFC9; background-color: #FAFAFA; color: #7A7369; cursor: pointer; transition: all 0.2s; }
+        .toggle-btn.active { background-color: #5D7052; color: white; border-color: #5D7052; }
+        .toggle-btn:first-child { border-top-left-radius: 0.5rem; border-bottom-left-radius: 0.5rem; }
+        .toggle-btn:last-child { border-top-right-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container { height: 350px; }
+        }
+        
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] { -moz-appearance: textfield; }
+        
+        #aiOutput h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1rem; color: #5D7052; border-bottom: 1px solid #E5E0D8; padding-bottom: 0.25rem;}
+        #aiOutput ul { list-style-type: disc; padding-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+        #aiOutput p { margin-top: 0.5rem; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body class="antialiased p-4 md:p-8 min-h-screen flex flex-col">
+
+    <!-- Chosen Palette: Warm Neutrals (Stone/Off-white) with Muted Sage Green (#5D7052), Rust (#D97757), and Ochre (#E5B15D) accents. -->
+    <!-- Application Structure Plan: A two-part dashboard. Section 1 is an input form collecting physiological data and goals. Section 2 (initially hidden) is the results dashboard. It uses a top-down information hierarchy: high-level energy needs (Calories), mid-level energy composition (Macros visually represented by a Donut chart), and granular biological requirements (Micros in a structured grid). This isolates inputs from outputs for clarity and prevents visual overload before data is processed. -->
+    <!-- Visualization & Content Choices: 1. Total Calories -> Metric Cards -> Provides immediate, clear answers for Maintenance and Goal calories. 2. Macronutrients -> Donut Chart (Chart.js) & Data List -> Shows the proportional breakdown of calories visually while providing exact gram amounts needed for meal planning. 3. Micronutrients -> Grid Layout -> Organizes RDAs clearly based on the user's demographic input without overwhelming them with charts. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <div class="max-w-5xl mx-auto w-full">
+        
+        <header class="mb-8 text-center md:text-left">
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">NutriCalc: Philippine Edition</h1>
+            <p class="text-[#7A7369] max-w-2xl text-sm md:text-base">Calculate your foundational energy requirements (TDEE), optimal macronutrient splits, and essential micronutrients tailored for the hot and humid Philippine climate.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <section class="lg:col-span-4 card p-6 h-fit">
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold border-b border-[#E5E0D8] pb-2 mb-2">Physiological Profile</h2>
+                    <p class="text-xs text-[#7A7369]">Input your metrics to generate a personalized nutritional baseline using the Mifflin-St Jeor equation.</p>
+                </div>
+
+                <form id="calcForm" class="space-y-5">
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Unit System</label>
+                        <div class="flex">
+                            <button type="button" class="toggle-btn active flex-1" data-unit="metric">Metric (kg/cm)</button>
+                            <button type="button" class="toggle-btn flex-1" data-unit="imperial">Imperial (lbs/in)</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Biological Sex</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="gender" value="male" checked class="accent-[#5D7052]">
+                                <span>Male</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="gender" value="female" class="accent-[#5D7052]">
+                                <span>Female</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="age" class="block text-sm font-medium mb-1">Age</label>
+                            <input type="number" id="age" required min="15" max="100" class="input-field" placeholder="Years">
+                        </div>
+                        <div>
+                            <label for="weight" class="block text-sm font-medium mb-1">Weight <span id="weightLabel">(kg)</span></label>
+                            <input type="number" id="weight" required min="30" max="300" step="0.1" class="input-field" placeholder="0.0">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="height" class="block text-sm font-medium mb-1">Height <span id="heightLabel">(cm)</span></label>
+                        <input type="number" id="height" required min="100" max="250" class="input-field" placeholder="0">
+                        <div id="imperialHeightInputs" class="hidden grid grid-cols-2 gap-4 mt-1">
+                            <input type="number" id="heightFt" placeholder="Feet" class="input-field" min="3" max="8">
+                            <input type="number" id="heightIn" placeholder="Inches" class="input-field" min="0" max="11">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="activity" class="block text-sm font-medium mb-1">Activity Level</label>
+                        <select id="activity" class="input-field appearance-none">
+                            <option value="1.2">Sedentary (Office job, little exercise)</option>
+                            <option value="1.375">Lightly Active (Exercise 1-3 days/wk)</option>
+                            <option value="1.55" selected>Moderately Active (Exercise 3-5 days/wk)</option>
+                            <option value="1.725">Very Active (Heavy exercise 6-7 days/wk)</option>
+                            <option value="1.9">Extra Active (Physical job + intense exercise)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="goal" class="block text-sm font-medium mb-1">Primary Goal</label>
+                        <select id="goal" class="input-field appearance-none">
+                            <option value="maintain">Maintain Current Weight</option>
+                            <option value="cut_mild">Mild Deficit (Lose ~0.25kg / 0.5lb per week)</option>
+                            <option value="cut">Moderate Deficit (Lose ~0.5kg / 1lb per week)</option>
+                            <option value="bulk_mild">Mild Surplus (Gain ~0.25kg / 0.5lb per week)</option>
+                            <option value="bulk">Moderate Surplus (Gain ~0.5kg / 1lb per week)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-primary w-full mt-4 text-lg">Generate Profile</button>
+                    <div id="errorMsg" class="text-red-500 text-sm hidden text-center mt-2">Please fill all fields correctly.</div>
+                </form>
+            </section>
+
+            <section id="resultsSection" class="lg:col-span-8 hidden opacity-0 transition-opacity duration-500 flex flex-col gap-6">
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="card p-5 text-center flex flex-col justify-center border-l-4 border-l-[#7A7369]">
+                        <h3 class="text-sm text-[#7A7369] font-medium uppercase tracking-wider mb-1">Basal Metabolic Rate</h3>
+                        <div class="text-3xl font-bold text-[#3F3A36]" id="resBMR">--</div>
+                        <p class="text-xs text-[#7A7369] mt-1">Calories burned at complete rest.</p>
+                    </div>
+                    <div class="card p-5 text-center flex flex-col justify-center border-l-4 border-l-[#E5B15D]">
+                        <h3 class="text-sm text-[#7A7369] font-medium uppercase tracking-wider mb-1">Maintenance (TDEE)</h3>
+                        <div class="text-3xl font-bold text-[#3F3A36]" id="resTDEE">--</div>
+                        <p class="text-xs text-[#7A7369] mt-1">Total daily energy expenditure.</p>
+                    </div>
+                    <div class="card p-5 text-center flex flex-col justify-center border-l-4 border-l-[#5D7052] bg-[#F4F6F3]">
+                        <h3 class="text-sm font-bold text-[#5D7052] uppercase tracking-wider mb-1">Target Calories</h3>
+                        <div class="text-4xl font-bold text-[#5D7052]" id="resTarget">--</div>
+                        <p class="text-xs font-medium text-[#4A5A41] mt-1" id="resGoalText">Based on your goal.</p>
+                    </div>
+                </div>
+
+                <div class="card p-6">
+                    <div class="mb-4">
+                        <h2 class="text-xl font-semibold border-b border-[#E5E0D8] pb-2 mb-2">Macronutrient Distribution</h2>
+                        <p class="text-xs text-[#7A7369]">A suggested optimal split based on your target calories. High protein preserves lean mass, adequate fats support hormone function, and remaining calories are allocated to carbohydrates for energy.</p>
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row items-center gap-8">
+                        <div class="w-full md:w-1/2">
+                            <div class="chart-container">
+                                <canvas id="macroChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="w-full md:w-1/2 space-y-4">
+                            <div class="flex justify-between items-center p-3 rounded bg-[#FAF5F2]">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-[#D97757]"></div>
+                                    <span class="font-medium text-[#3F3A36]">Protein</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-lg text-[#D97757]" id="resProtein">-- g</div>
+                                    <div class="text-xs text-[#7A7369]">4 cals/g</div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center p-3 rounded bg-[#F8F6E6]">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-[#E5B15D]"></div>
+                                    <span class="font-medium text-[#3F3A36]">Fats</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-lg text-[#E5B15D]" id="resFat">-- g</div>
+                                    <div class="text-xs text-[#7A7369]">9 cals/g</div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center p-3 rounded bg-[#F4F6F3]">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 rounded-full bg-[#5D7052]"></div>
+                                    <span class="font-medium text-[#3F3A36]">Carbohydrates</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-lg text-[#5D7052]" id="resCarbs">-- g</div>
+                                    <div class="text-xs text-[#7A7369]">4 cals/g</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-6">
+                    <div class="mb-4">
+                        <h2 class="text-xl font-semibold border-b border-[#E5E0D8] pb-2 mb-2">Essential Micronutrients & Electrolytes</h2>
+                        <p class="text-xs text-[#7A7369]">Recommended Daily Allowances optimized for the hot Philippine weather. Enhanced focus on electrolytes (Sodium, Potassium, Magnesium) lost through sweat, and Vitamin C for immune support during seasonal changes.</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="microGrid">
+                    </div>
+                    <p class="text-[10px] text-right text-[#7A7369] mt-4">*mcg = micrograms, mg = milligrams. Hydration is crucial in this climate; drink at least 2-3 liters of water daily.</p>
+                </div>
+
+                <!-- AI Feature Section -->
+                <div class="card p-6 bg-gradient-to-r from-[#F4F6F3] to-[#F9F7F1] border-[#5D7052] border-opacity-30">
+                    <div class="mb-4 flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                        <div>
+                            <h2 class="text-xl font-semibold text-[#5D7052] pb-1">AI Coach: Pinoy Meals & Fitness</h2>
+                            <p class="text-xs text-[#7A7369]">Let Gemini translate your targets into a practical Filipino meal plan and a weather-appropriate workout routine.</p>
+                        </div>
+                        <button id="btnGenerateMealPlan" class="btn-primary w-full md:w-auto text-sm flex items-center justify-center gap-2 whitespace-nowrap">
+                            ✨ Generate Plan
+                        </button>
+                    </div>
+                    
+                    <div id="aiLoading" class="hidden mt-4 text-sm text-[#7A7369] flex items-center gap-2 justify-center py-4">
+                        <svg class="animate-spin h-5 w-5 text-[#5D7052]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Consulting Gemini...
+                    </div>
+                    
+                    <div id="aiOutput" class="hidden mt-4 p-5 bg-white rounded-lg border border-[#E5E0D8] text-sm text-[#3F3A36]">
+                        <!-- AI response injected here -->
+                    </div>
+                </div>
+
+            </section>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            const form = document.getElementById('calcForm');
+            const unitBtns = document.querySelectorAll('.toggle-btn');
+            const heightInput = document.getElementById('height');
+            const heightLabel = document.getElementById('heightLabel');
+            const weightLabel = document.getElementById('weightLabel');
+            const imperialHeightInputs = document.getElementById('imperialHeightInputs');
+            const heightFt = document.getElementById('heightFt');
+            const heightIn = document.getElementById('heightIn');
+            const errorMsg = document.getElementById('errorMsg');
+            const resultsSection = document.getElementById('resultsSection');
+            
+            let currentUnit = 'metric';
+            let macroChartInstance = null;
+            
+            // --- AI State Variables ---
+            const apiKey = ""; 
+            const btnGenerateMealPlan = document.getElementById('btnGenerateMealPlan');
+            const aiLoading = document.getElementById('aiLoading');
+            const aiOutput = document.getElementById('aiOutput');
+            let currentProfile = {};
+
+            unitBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    unitBtns.forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentUnit = e.target.dataset.unit;
+                    
+                    if (currentUnit === 'metric') {
+                        weightLabel.innerText = '(kg)';
+                        heightLabel.innerText = '(cm)';
+                        heightInput.classList.remove('hidden');
+                        heightInput.required = true;
+                        imperialHeightInputs.classList.add('hidden');
+                        heightFt.required = false;
+                        heightIn.required = false;
+                    } else {
+                        weightLabel.innerText = '(lbs)';
+                        heightLabel.innerText = '(ft / in)';
+                        heightInput.classList.add('hidden');
+                        heightInput.required = false;
+                        imperialHeightInputs.classList.remove('hidden');
+                        heightFt.required = true;
+                        heightIn.required = true;
+                    }
+                });
+            });
+
+            const micronutrientData = {
+                male: {
+                    'Potassium (Sweat Loss)': '3400 mg', 'Sodium (Electrolyte)': '< 2300 mg', 'Magnesium (Energy)': '400 mg', 'Calcium': '1000 mg',
+                    'Vitamin C (Immunity)': '90 mg', 'Vitamin D (Sunlight)': '15 mcg', 'Zinc': '11 mg', 'Iron': '8 mg',
+                    'Vitamin A': '900 mcg', 'Vitamin E': '15 mg', 'Vitamin K': '120 mcg', 'Fiber': '38 g'
+                },
+                female: {
+                    'Potassium (Sweat Loss)': '2600 mg', 'Sodium (Electrolyte)': '< 2300 mg', 'Magnesium (Energy)': '310 mg', 'Calcium': '1000 mg',
+                    'Vitamin C (Immunity)': '75 mg', 'Vitamin D (Sunlight)': '15 mcg', 'Zinc': '8 mg', 'Iron': '18 mg',
+                    'Vitamin A': '700 mcg', 'Vitamin E': '15 mg', 'Vitamin K': '90 mcg', 'Fiber': '25 g'
+                }
+            };
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                errorMsg.classList.add('hidden');
+
+                let age = parseInt(document.getElementById('age').value);
+                let gender = document.querySelector('input[name="gender"]:checked').value;
+                let activity = parseFloat(document.getElementById('activity').value);
+                let goalStr = document.getElementById('goal').value;
+                
+                let weightKg, heightCm;
+
+                if (currentUnit === 'metric') {
+                    weightKg = parseFloat(document.getElementById('weight').value);
+                    heightCm = parseFloat(heightInput.value);
+                } else {
+                    let weightLbs = parseFloat(document.getElementById('weight').value);
+                    weightKg = weightLbs / 2.20462;
+                    let ft = parseInt(heightFt.value) || 0;
+                    let inches = parseInt(heightIn.value) || 0;
+                    heightCm = (ft * 30.48) + (inches * 2.54);
+                }
+
+                if (!age || !weightKg || !heightCm) {
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+
+                calculateNutrition(age, gender, weightKg, heightCm, activity, goalStr);
+            });
+
+            function calculateNutrition(age, gender, weightKg, heightCm, activity, goalStr) {
+                
+                let bmr;
+                if (gender === 'male') {
+                    bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * age) + 5;
+                } else {
+                    bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * age) - 161;
+                }
+
+                let tdee = bmr * activity;
+
+                let targetCalories = tdee;
+                let goalText = "Maintenance Level";
+                
+                switch(goalStr) {
+                    case 'cut_mild': targetCalories = tdee - 250; goalText = "Mild Deficit"; break;
+                    case 'cut': targetCalories = tdee - 500; goalText = "Moderate Deficit"; break;
+                    case 'bulk_mild': targetCalories = tdee + 250; goalText = "Mild Surplus"; break;
+                    case 'bulk': targetCalories = tdee + 500; goalText = "Moderate Surplus"; break;
+                }
+
+                let proteinGrams = weightKg * 2.2; 
+                let proteinCals = proteinGrams * 4;
+
+                let fatCals = targetCalories * 0.25;
+                let fatGrams = fatCals / 9;
+
+                let carbCals = targetCalories - proteinCals - fatCals;
+                let carbGrams = carbCals / 4;
+
+                if (carbGrams < 0) {
+                    carbGrams = 0; 
+                    proteinGrams = (targetCalories - fatCals) / 4; 
+                }
+
+                updateUI(
+                    Math.round(bmr), 
+                    Math.round(tdee), 
+                    Math.round(targetCalories), 
+                    goalText,
+                    Math.round(proteinGrams), 
+                    Math.round(fatGrams), 
+                    Math.round(carbGrams),
+                    gender
+                );
+            }
+
+            function updateUI(bmr, tdee, target, goalText, protein, fat, carbs, gender) {
+                
+                currentProfile = { target, goalText, protein, fat, carbs };
+
+                document.getElementById('resBMR').innerText = bmr;
+                document.getElementById('resTDEE').innerText = tdee;
+                document.getElementById('resTarget').innerText = target;
+                document.getElementById('resGoalText').innerText = goalText;
+
+                document.getElementById('resProtein').innerText = protein + ' g';
+                document.getElementById('resFat').innerText = fat + ' g';
+                document.getElementById('resCarbs').innerText = carbs + ' g';
+
+                updateChart(protein * 4, fat * 9, carbs * 4);
+
+                populateMicros(gender);
+
+                resultsSection.classList.remove('hidden');
+                setTimeout(() => {
+                    resultsSection.classList.remove('opacity-0');
+                    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 50);
+            }
+
+            function updateChart(pCals, fCals, cCals) {
+                const ctx = document.getElementById('macroChart').getContext('2d');
+                
+                if (macroChartInstance) {
+                    macroChartInstance.destroy();
+                }
+
+                macroChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Protein', 'Fats', 'Carbs'],
+                        datasets: [{
+                            data: [pCals, fCals, cCals],
+                            backgroundColor: ['#D97757', '#E5B15D', '#5D7052'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) { label += ': '; }
+                                        if (context.parsed !== null) {
+                                            label += Math.round(context.parsed) + ' cals';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function populateMicros(gender) {
+                const grid = document.getElementById('microGrid');
+                grid.innerHTML = '';
+                const data = micronutrientData[gender];
+
+                for (const [nutrient, amount] of Object.entries(data)) {
+                    const card = document.createElement('div');
+                    card.className = 'bg-[#FAFAFA] border border-[#E5E0D8] rounded p-3 text-center';
+                    card.innerHTML = `
+                        <div class="text-[#7A7369] text-xs font-medium mb-1">${nutrient}</div>
+                        <div class="text-[#3F3A36] font-bold text-sm">${amount}</div>
+                    `;
+                    grid.appendChild(card);
+                }
+            }
+
+            // --- Gemini API Integration ---
+            async function fetchWithRetry(url, options, retries = 5) {
+                const delays = [1000, 2000, 4000, 8000, 16000];
+                for (let i = 0; i < retries; i++) {
+                    try {
+                        const response = await fetch(url, options);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return await response.json();
+                    } catch (error) {
+                        if (i === retries - 1) throw error;
+                        await new Promise(resolve => setTimeout(resolve, delays[i]));
+                    }
+                }
+            }
+
+            btnGenerateMealPlan.addEventListener('click', async () => {
+                if (!currentProfile.target) return;
+                
+                btnGenerateMealPlan.disabled = true;
+                aiLoading.classList.remove('hidden');
+                aiOutput.classList.add('hidden');
+                
+                const activityLevelText = document.getElementById('activity').options[document.getElementById('activity').selectedIndex].text;
+
+                const prompt = `Act as an expert nutritionist and fitness coach based in the Philippines.
+                My goal is "${currentProfile.goalText}". 
+                My targets: exactly ${currentProfile.target} calories, ${currentProfile.protein}g protein, ${currentProfile.fat}g fat, and ${currentProfile.carbs}g carbs. 
+                My current activity level: ${activityLevelText}.
+                
+                Please provide two things:
+                1. A 1-day sample meal plan using ONLY ingredients and meals easily accessible and common in the Philippines (e.g., local fish like bangus/tilapia, chicken, pork, rice, local vegetables like kangkong/monggo/sitaw, local fruits like mango/papaya/banana). Include estimated macros for each meal to show how it adds up to my exact targets.
+                2. A suggested daily workout routine tailored to my activity level. Include specific advice on WHEN to exercise considering the extremely hot and humid Philippine weather (e.g., avoiding the midday sun, prioritizing hydration).
+                
+                Format your response using ONLY basic HTML tags like <h3>, <ul>, <li>, <strong>, and <p>. Do not use markdown blocks or backticks. Keep it concise, practical, and highly motivating.`;
+
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                    const payload = {
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: "You are a helpful, encouraging nutrition assistant." }] }
+                    };
+
+                    const result = await fetchWithRetry(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    let text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't generate a plan at this time.";
+                    text = text.replace(/```html/g, '').replace(/```/g, ''); // Cleanup markdown bounds
+
+                    aiOutput.innerHTML = text;
+                    aiOutput.classList.remove('hidden');
+                } catch (error) {
+                    aiOutput.innerHTML = `<p class="text-red-500">Error connecting to AI Assistant. Please try again later.</p>`;
+                    aiOutput.classList.remove('hidden');
+                } finally {
+                    btnGenerateMealPlan.disabled = false;
+                    aiLoading.classList.add('hidden');
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
